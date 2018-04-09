@@ -2,11 +2,11 @@
     "name": "slncode",
     "displayName": "SlnCode",
     "description": "Edit visual studio solution files",
-    "version": "0.1.1",
+    "version": "0.1.7",
     "publisher": "bigonazzi",
     "license": "Apache-2.0",
     "engines": {
-        "vscode": "^1.21.0"
+        "vscode": "^1.22.0"
     },
     "categories": [
         "Other"
@@ -22,15 +22,7 @@
                 "title": "Clone Project",
                 "category": "Solution"
             }
-        ],
-        "menus": {
-            "editor/context": [
-                {
-                    "command": "slncode.cloneProject",
-                    "when": "resourceExtname == .sln"
-                }
-            ]
-        }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -40,7 +32,7 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "dependencies": {
-        "@types/uuid": "^3.4.3"
+        "@types/uuid": "^3.2.1"
     },
     "devDependencies": {
         "typescript": "^2.6.1",
