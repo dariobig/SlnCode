@@ -43,7 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
                     }
 
                     editor.edit(eb => {
-                        if (!cloneProject(eb, solution, selected.description as string, projectName)) {
+                        let basePath = path.dirname(editor.document.uri.fsPath);
+                        if (!cloneProject(eb, solution, selected.description as string, projectName, basePath)) {
                             vscode.window.showErrorMessage(`can't clone project ${JSON.stringify(selected)}`);
                         }
                     });
@@ -54,7 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(cloneProjectsCmd);
 
-    function cloneProject(edit: vscode.TextEditorEdit, solution: Solution, projectGuid: string, projectName: string): boolean {
+    function cloneProject(
+        edit: vscode.TextEditorEdit, 
+        solution: Solution, 
+        projectGuid: string, 
+        projectName: string,
+        solutionPath: string): boolean {
+
         let project = solution.projects.find(p => p.projectGuid === projectGuid);
         if (project === undefined) {
             return false;
@@ -69,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
         
         // Clone project definition
         let newProject = `Project("{${project.solutionGuid}}") = "${projectName}", ` +
-            `"${makePath(projectName)}", "{${newGuid}}" \nEndProject\n`;
+            `"${relativeProjectPath(projectName)}", "{${newGuid}}" \nEndProject\n`;
         edit.insert(new vscode.Position(project.lineNumber + 1, 0), newProject);
 
         // Clone configs
@@ -85,32 +92,40 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }
 
-        // TODO: Create + copy / replace name & guid in project file
-        cloneProjectFolder(project, projectName, newGuid);
+        cloneProjectFolder(solutionPath, project, projectName, newGuid);
 
         return true;
     }
 
-    function makePath(projectName: string): string {
-        return `"${projectName}\\${projectName}.csproj"`;
+    function relativeProjectPath(projectName: string): string {
+        return `${projectName}\\${projectName}.csproj`;
     }
 
-    function cloneProjectFolder(project: Project, newName: string, newGuid: string): boolean {
+    function replaceAll(text: string, original: string, replacement: string): string {
+        return text.split(original).join(replacement);
+    }
+
+    function cloneProjectFolder(basePath: string, project: Project, newName: string, newGuid: string): boolean {
         try {
-            fs.mkdirSync(newName);
-            let newProjectPath = makePath(newName);
+            let newProjectDir = path.join(basePath, newName);
+            let newProjectPath = path.join(basePath, relativeProjectPath(newName));
+
+            if (!fs.existsSync(newProjectDir)){
+                fs.mkdirSync(newProjectDir);
+            }
+            
             fs.writeFileSync(newProjectPath, '', 'utf8');
 
-            let projectPath = project.projectPath;
-            if (!fs.exists(projectPath)) {
+            let oldProjectPath = path.join(basePath, project.projectPath);
+            if (!fs.existsSync(oldProjectPath)) {
                 return false;
             }
 
             // Look for files referenced within old project file and copy them over.
-            let content = fs.readFileSync(projectPath, 'utf8');
-            let projectDir = path.dirname(projectPath);
-            fs.readdirSync(projectDir).forEach((name) => {
-                let p = path.join(projectDir, name);
+            let content = fs.readFileSync(oldProjectPath, 'utf8');
+            let oldProjectDir = path.dirname(oldProjectPath);
+            fs.readdirSync(oldProjectDir).forEach((name) => {
+                let p = path.join(oldProjectDir, name);
                 if (fs.statSync(p).isFile() && content.indexOf(p) >= 0) {
                     return;
                 }
@@ -119,18 +134,20 @@ export function activate(context: vscode.ExtensionContext) {
                 fs.readFile(p, 'utf8', (err, data) => {
                     if (!err) {
                         // Replace references in project file
-                        if (p === projectPath) {
-                            data = data.replace(projectPath, newProjectPath)
-                                .replace(project.projectGuid, newGuid)
-                                .replace(project.projectName, newName);
+                        if (p === oldProjectPath) {
+                            data = replaceAll(data, project.projectGuid, newGuid);
+                            data = replaceAll(data, oldProjectPath, newProjectPath);
+                            data = replaceAll(data, oldProjectDir, newProjectDir);
+                            data = replaceAll(data, project.projectName, newName);
+                            fs.writeFileSync(path.join(newProjectDir, path.basename(newProjectPath)), data);
+                        } else {
+                            fs.writeFileSync(path.join(newProjectDir, name), data);
                         }
-
-                        fs.writeFileSync(path.join(newName, name), data);
                     }
                 });
             });
         } catch (e) {
-            vscode.window.showErrorMessage(e);
+            vscode.window.showErrorMessage(e.toString());
             return false;
         }
 
