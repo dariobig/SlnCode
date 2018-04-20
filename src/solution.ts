@@ -82,7 +82,7 @@ class Section {
     }
 }
 
-class Project {
+export class Project {
     lineNumber: number;
     solutionGuid:string;
     projectName:string;

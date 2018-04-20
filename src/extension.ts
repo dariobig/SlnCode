@@ -1,7 +1,9 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import Solution from './solution';
+import Solution, {Project} from './solution';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export function activate(context: vscode.ExtensionContext) {
     const guid = require('uuid/v4');
@@ -67,7 +69,7 @@ export function activate(context: vscode.ExtensionContext) {
         
         // Clone project definition
         let newProject = `Project("{${project.solutionGuid}}") = "${projectName}", ` +
-            `"${projectName}\\${projectName}.csproj", "{${newGuid}}" \nEndProject\n`;
+            `"${makePath(projectName)}", "{${newGuid}}" \nEndProject\n`;
         edit.insert(new vscode.Position(project.lineNumber + 1, 0), newProject);
 
         // Clone configs
@@ -84,6 +86,53 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         // TODO: Create + copy / replace name & guid in project file
+        cloneProjectFolder(project, projectName, newGuid);
+
+        return true;
+    }
+
+    function makePath(projectName: string): string {
+        return `"${projectName}\\${projectName}.csproj"`;
+    }
+
+    function cloneProjectFolder(project: Project, newName: string, newGuid: string): boolean {
+        try {
+            fs.mkdirSync(newName);
+            let newProjectPath = makePath(newName);
+            fs.writeFileSync(newProjectPath, '', 'utf8');
+
+            let projectPath = project.projectPath;
+            if (!fs.exists(projectPath)) {
+                return false;
+            }
+
+            // Look for files referenced within old project file and copy them over.
+            let content = fs.readFileSync(projectPath, 'utf8');
+            let projectDir = path.dirname(projectPath);
+            fs.readdirSync(projectDir).forEach((name) => {
+                let p = path.join(projectDir, name);
+                if (fs.statSync(p).isFile() && content.indexOf(p) >= 0) {
+                    return;
+                }
+                
+                // Copy files asynchronously
+                fs.readFile(p, 'utf8', (err, data) => {
+                    if (!err) {
+                        // Replace references in project file
+                        if (p === projectPath) {
+                            data = data.replace(projectPath, newProjectPath)
+                                .replace(project.projectGuid, newGuid)
+                                .replace(project.projectName, newName);
+                        }
+
+                        fs.writeFileSync(path.join(newName, name), data);
+                    }
+                });
+            });
+        } catch (e) {
+            vscode.window.showErrorMessage(e);
+            return false;
+        }
 
         return true;
     }
