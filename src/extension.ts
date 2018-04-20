@@ -1,12 +1,11 @@
 'use strict';
 
 import * as vscode from 'vscode';
-// import { v4 as guid } from require('@types/uuid');
 import Solution from './solution';
 
 export function activate(context: vscode.ExtensionContext) {
     const guid = require('uuid/v4');
-
+    
     let cloneProjectsCmd = vscode.commands.registerTextEditorCommand('slncode.cloneProject', editor => {
         let content = editor.document.getText();
         if (content === null) {

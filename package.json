@@ -2,7 +2,7 @@
     "name": "slncode",
     "displayName": "SlnCode",
     "description": "Edit visual studio solution files",
-    "version": "0.1.8",
+    "version": "0.1.9",
     "publisher": "bigonazzi",
     "license": "Apache-2.0",
     "engines": {
@@ -32,7 +32,7 @@
         "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "dependencies": {
-        "@types/uuid": "^3.2.1"
+        "uuid": "^3.0.1"
     },
     "devDependencies": {
         "typescript": "^2.6.1",
