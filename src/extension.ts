@@ -1,7 +1,7 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import * as guid from 'uuid/v4';
+import { v4 as guid } from 'uuid';
 import Solution from './solution';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
             return false;
         }
 
-        let newGuid = guid().toUpperCase();
+        const newGuid: string = guid().toUpperCase();
         
         // Clone project definition
         let newProject = `Project("{${project.solutionGuid}}") = "${projectName}", ` +
