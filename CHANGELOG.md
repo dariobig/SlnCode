@@ -3,6 +3,11 @@ All notable changes to the "slncode" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## 0.2.1 - 2018-04-20
+
+### Added
+- contextual menu item
+
 ## 0.2.0 - 2018-04-20
 
 ### Added
