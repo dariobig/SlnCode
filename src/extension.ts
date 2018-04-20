@@ -22,8 +22,8 @@ export function activate(context: vscode.ExtensionContext) {
                     return {
                         label: p.projectName,
                         detail: p.projectPath,
-                        description: p.projectGuid
-                    } as vscode.QuickPickItem;
+                        description: p.projectGuid,
+                    };
                 });
             
             vscode.window.showQuickPick(options).then(selected => {

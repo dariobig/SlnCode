@@ -22,7 +22,16 @@
                 "title": "Clone Project",
                 "category": "Solution"
             }
-        ]
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "command": "slncode.cloneProject",
+                    "when": "resourceExtname == .sln",
+                    "group": "SlnCode"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
